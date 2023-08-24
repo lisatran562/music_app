@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
+import Recommendations from './Recommendations'
 
 const LoginForm = () => {
     const [email, setEmail] = useState('')
@@ -8,6 +9,24 @@ const LoginForm = () => {
     const [loginErrors, setLoginErrors] = useState('')
 
     const navigate = useNavigate();
+
+    const [token, setToken] = useState('');
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const hash = window.location.hash;
+        let token = window.localStorage.getItem('token');
+
+        if (!token && hash) {
+            token = hash.substring(1).split('&').find(elem => elem.startsWith('access_token')).split('=')[1];
+
+            window.location.hash = '';
+            window.localStorage.setItem('token', token);
+        }
+
+        setToken(token);
+
+    }, []);
 
     const handleLogin = (e) => {
         const clientId = "33bccc55613d450fa0989687179fff2d"
@@ -23,9 +42,6 @@ const LoginForm = () => {
             'user-read-playback-position',
             'user-top-read'
         ]
-        window.location.href = `${apiUrl}?client_id=${clientId}&redirect_uri=${redirectUrl}&scope=${scope.join(
-            " "
-        )}&response_type=token&show_dialog=true`
         e.preventDefault();
         axios.post(`http://localhost:8000/api/users/login`, { email, password }, { withCredentials: true })
             .then(res => {
@@ -33,10 +49,15 @@ const LoginForm = () => {
                 if (res.data.error) {
                     setLoginErrors(res.data.error)
                 } else {
-                    navigate('/dashboard')
+                    navigate('/recommendations')
                 }
             })
             .catch(err => console.log('error when logging in', err))
+        // window.location.href = `${apiUrl}?client_id=${clientId}&redirect_uri=${redirectUrl}&scope=${scope.join(
+        //     " "
+        // )}&response_type=token&show_dialog=true`
+        
+        navigate('/recommendations')    
     }
 
     return (
